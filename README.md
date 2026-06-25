@@ -35,7 +35,13 @@ npm run dev
 
 ## Data
 
-Census 2011 marginals are committed under `data/census/` (curated from PCA + C-series tables). Synthetic residents are built via hierarchical IPF + conditional assignment — not real microdata.
+Census 2011 marginals live under `data/census/`. The map image is `public/assets/Delhi.png`.
+
+```bash
+npm run ingest:census
+```
+
+That updates `delhi-nct.json` from the CSV and keeps district / SC / education / language / migrant tables that the state-level CSV does not include. Synthetic residents are built via hierarchical IPF + conditional assignment — not real microdata.
 
 ## Tests
 

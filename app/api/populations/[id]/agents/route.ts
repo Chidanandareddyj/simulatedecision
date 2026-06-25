@@ -24,18 +24,30 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     const url = new URL(req.url);
     const limit = Math.min(5000, Math.max(1, Number(url.searchParams.get("limit") ?? 1000)));
     const offset = Math.max(0, Number(url.searchParams.get("offset") ?? 0));
+    const sampleParam = url.searchParams.get("sample");
 
     const total = await prisma.syntheticResident.count({ where: { populationRunId: id } });
     if (total === 0) {
       return NextResponse.json({ error: "Population not found" }, { status: 404 });
     }
 
-    const rows = await prisma.syntheticResident.findMany({
-      where: { populationRunId: id },
-      orderBy: { idx: "asc" },
-      skip: offset,
-      take: limit,
-    });
+    let rows;
+    if (sampleParam) {
+      const sampleN = Math.min(500, Math.max(1, Number(sampleParam)));
+      const step = total / sampleN;
+      const targetIdx = Array.from({ length: sampleN }, (_, i) => Math.floor(i * step + step * 0.5));
+      rows = await prisma.syntheticResident.findMany({
+        where: { populationRunId: id, idx: { in: targetIdx } },
+        orderBy: { idx: "asc" },
+      });
+    } else {
+      rows = await prisma.syntheticResident.findMany({
+        where: { populationRunId: id },
+        orderBy: { idx: "asc" },
+        skip: offset,
+        take: limit,
+      });
+    }
 
     const agents = rows.map((r) => ({
       id: r.idx,

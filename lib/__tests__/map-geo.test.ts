@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { assignVerdicts } from "@/lib/map/verdict";
-import { lonlatForWard, lonlatToPixel } from "@/lib/geo/delhi";
+import { lonlatEvenScatter, lonlatForWard, lonlatToPixel } from "@/lib/geo/delhi";
 
 describe("assignVerdicts", () => {
   const agents = Array.from({ length: 100 }, (_, i) => ({ hx: i * 10, hy: i * 8 }));
@@ -20,6 +20,12 @@ describe("assignVerdicts", () => {
 });
 
 describe("delhi geo", () => {
+  it("lonlatEvenScatter is deterministic", () => {
+    const a = lonlatEvenScatter(42, 0, 100);
+    const b = lonlatEvenScatter(42, 0, 100);
+    expect(a).toEqual(b);
+  });
+
   it("lonlatForWard is deterministic", () => {
     const a = lonlatForWard("NW-W01", 12345);
     const b = lonlatForWard("NW-W01", 12345);

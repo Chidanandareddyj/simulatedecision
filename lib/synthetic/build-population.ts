@@ -3,7 +3,7 @@ import { ipf, tableToDistribution } from "@/lib/synthetic/ipf";
 import { SeededRng, agentSeed } from "@/lib/synthetic/rng";
 import { buildPersona } from "@/lib/persona/build";
 import { assignName } from "@/lib/persona/names";
-import { lonlatForWard } from "@/lib/geo/delhi";
+import { lonlatEvenScatter } from "@/lib/geo/delhi";
 import type { SyntheticResidentRecord } from "@/lib/types";
 
 const SEXES = ["male", "female"] as const;
@@ -188,7 +188,7 @@ export function buildPopulation(opts: BuildPopulationOptions): BuildPopulationRe
       profile: { politics: { economicBase: 0.1, socialBase: 0.15, trustBase: -0.05, changeBase: 0.2 } },
     });
 
-    const { lon, lat } = lonlatForWard(ward, aseed);
+    const { lon, lat } = lonlatEvenScatter(seed, idx, n);
     const name = assignName(aseed);
 
     residents.push({

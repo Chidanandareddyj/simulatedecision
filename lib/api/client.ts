@@ -136,6 +136,20 @@ export const createPopulation = (overrides: { n?: number; seed?: number } = {}) 
     timeout: 120000,
   });
 
+export async function getDisplayAgents(
+  populationRunId: string,
+  count: number,
+): Promise<MapAgent[]> {
+  const page = await req<{
+    agents: MapAgent[];
+    total_matched: number;
+  }>(
+    `/api/populations/${encodeURIComponent(populationRunId)}/agents?sample=${count}`,
+    { timeout: 60000 },
+  );
+  return page.agents || [];
+}
+
 export async function getAllAgents(
   populationRunId: string,
   onProgress?: (loaded: number, total: number) => void,

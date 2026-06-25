@@ -1,45 +1,94 @@
 {
   "year": 2011,
   "nctPopulation": 16787941,
-  "source": "Census India 2011 PCA / A-01 tables (curated snapshot)",
+  "source": "Census India 2011 — NCT Delhi row from india_state_master_dataset.csv; districts/SC/education/language/migrant from prior PCA tables where CSV is state-level only",
   "districts": [
-    { "code": "090", "name": "North West", "population": 3656539 },
-    { "code": "091", "name": "North", "population": 883418 },
-    { "code": "092", "name": "North East", "population": 2241624 },
-    { "code": "093", "name": "East", "population": 1709346 },
-    { "code": "094", "name": "New Delhi", "population": 142004 },
-    { "code": "095", "name": "Central", "population": 582320 },
-    { "code": "096", "name": "West", "population": 2531583 },
-    { "code": "097", "name": "South West", "population": 2292958 },
-    { "code": "098", "name": "South", "population": 2733149 }
+    {
+      "code": "090",
+      "name": "North West",
+      "population": 3656539
+    },
+    {
+      "code": "091",
+      "name": "North",
+      "population": 883418
+    },
+    {
+      "code": "092",
+      "name": "North East",
+      "population": 2241624
+    },
+    {
+      "code": "093",
+      "name": "East",
+      "population": 1709346
+    },
+    {
+      "code": "094",
+      "name": "New Delhi",
+      "population": 142004
+    },
+    {
+      "code": "095",
+      "name": "Central",
+      "population": 582320
+    },
+    {
+      "code": "096",
+      "name": "West",
+      "population": 2531583
+    },
+    {
+      "code": "097",
+      "name": "South West",
+      "population": 2292958
+    },
+    {
+      "code": "098",
+      "name": "South",
+      "population": 2733149
+    }
   ],
   "nctMarginals": {
-    "sex": { "male": 8987040, "female": 7800901 },
-    "ageBand": {
-      "0-14": 2018553,
-      "15-24": 2834567,
-      "25-44": 5456789,
-      "45-59": 3234567,
-      "60+": 3242465
+    "sex": {
+      "male": 8987326,
+      "female": 7800615
     },
-    "literacy": { "literate": 14450912, "illiterate": 2337029 },
-    "scst": { "sc": 2789123, "non_sc": 13998818, "st": 42341 },
-    "workerStatus": { "worker": 5534567, "non_worker": 11253374 },
+    "ageBand": {
+      "0-14": 4585959,
+      "15-24": 2719608,
+      "25-44": 5235482,
+      "45-59": 3103385,
+      "60+": 1143507
+    },
+    "literacy": {
+      "literate": 12737767,
+      "illiterate": 4050174
+    },
+    "scst": {
+      "sc": 2789123,
+      "non_sc": 13998818,
+      "st": 42341
+    },
+    "workerStatus": {
+      "worker": 10703598,
+      "non_worker": 6084343
+    },
     "occupationGroup": {
-      "cultivator": 45678,
-      "ag_labor": 123456,
+      "cultivator": 71770,
+      "ag_labor": 62948,
       "household_industry": 345678,
-      "other_worker": 5019755,
-      "non_worker": 11253374
+      "other_worker": 10223202,
+      "non_worker": 6084343
     },
     "religion": {
-      "hindu": 13701234,
-      "muslim": 2145678,
-      "sikh": 570456,
-      "christian": 151234,
-      "jain": 67123,
-      "buddhist": 23456,
-      "other": 12760
+      "hindu": 13712100,
+      "muslim": 2158684,
+      "christian": 146093,
+      "sikh": 570581,
+      "buddhist": 18449,
+      "jain": 166231,
+      "other": 15803
     },
     "education": {
       "below_primary": 1234567,

@@ -1,5 +1,5 @@
 import delhiMap from "@/data/geo/delhi-map.json";
-import { SeededRng } from "@/lib/synthetic/rng";
+import { SeededRng, agentSeed } from "@/lib/synthetic/rng";
 
 export interface DelhiBbox {
   west: number;
@@ -12,6 +12,28 @@ export const DELHI_BBOX: DelhiBbox = delhiMap.bbox;
 export const DELHI_IMAGE_SIZE = delhiMap.imageSize;
 
 const wardByName = new Map(delhiMap.wards.map((w) => [w.ward, w]));
+
+/** Even grid scatter across the city bbox (not ward-centroid based). */
+export function lonlatEvenScatter(
+  seed: number,
+  idx: number,
+  n: number,
+  bbox: DelhiBbox = DELHI_BBOX,
+): { lon: number; lat: number } {
+  const cols = Math.ceil(Math.sqrt(n));
+  const rows = Math.ceil(n / cols);
+  const col = idx % cols;
+  const row = Math.floor(idx / cols);
+  const rng = new SeededRng(agentSeed(seed, idx));
+  const jx = rng.next() * 0.8 + 0.1;
+  const jy = rng.next() * 0.8 + 0.1;
+  const tx = (col + jx) / cols;
+  const ty = (row + jy) / rows;
+  return {
+    lon: bbox.west + tx * (bbox.east - bbox.west),
+    lat: bbox.north - ty * (bbox.north - bbox.south),
+  };
+}
 
 export function lonlatForWard(ward: string, seed: number): { lon: number; lat: number } {
   const base = wardByName.get(ward);

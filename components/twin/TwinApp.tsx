@@ -5,7 +5,7 @@ import MapCanvas, { type MapCanvasHandle } from "@/components/twin/MapCanvas";
 import type { DelhiMap } from "@/lib/map/delhi-map";
 import type { MapSprite } from "@/lib/map/delhi-map";
 import { assignVerdicts } from "@/lib/map/verdict";
-import { MAP, SIM, TIMING } from "@/lib/map/config";
+import { MAP, SIM, TIMING, MAP_SPRITE_COUNT } from "@/lib/map/config";
 import { DELHI_BBOX } from "@/lib/geo/delhi";
 import * as api from "@/lib/api/client";
 import type { CityInfo, PollResultSnake } from "@/lib/api/client";
@@ -45,7 +45,7 @@ function guessFraming(question: string) {
     : "vote";
 }
 
-function fallbackAgents(n: number, bbox = DELHI_BBOX) {
+function fallbackAgents(n = MAP_SPRITE_COUNT, bbox = DELHI_BBOX) {
   const out: { lonlat: [number, number] }[] = [];
   for (let i = 0; i < n; i++) {
     const lon = bbox.west + Math.random() * (bbox.east - bbox.west);
@@ -148,7 +148,7 @@ export default function TwinApp() {
     const map = mapInstance.current;
     if (!map) return;
     setCity(c);
-    MAP.base = `/assets/${c.slug}_tiles.png`;
+    MAP.base = c.slug === "delhi" ? "/assets/Delhi.png" : `/assets/${c.slug}_tiles.png`;
     if (c.bbox) MAP.bbox = { ...c.bbox };
     map.setBase(MAP.base);
     setStatusHtml(`waking ${c.display}…`);
@@ -159,15 +159,14 @@ export default function TwinApp() {
       const pop = await api.createPopulation({ n: SIM.n, seed: SIM.seed });
       setPopulationRunId(pop.id);
       setBootPct(0.2);
-      const agents = await api.getAllAgents(pop.id, (loaded, total) => {
-        setBootPct(0.2 + 0.77 * (total ? loaded / total : 0));
-      });
+      const agents = await api.getDisplayAgents(pop.id, MAP_SPRITE_COUNT);
+      setBootPct(0.97);
       if (!agents.length) throw new Error("no agents returned");
       map.setAgents(agents);
-      setResidents(agents.length);
+      setResidents(pop.n);
       map.setSim(c.slug, pop.id);
       setBootPct(1);
-      setIdleStatus(agents.length, c);
+      setIdleStatus(pop.n, c);
       setTimeout(() => {
         setShowBoot(false);
         api.getNews(c.slug).then((d) => setNews(d.articles || [])).catch(() => {});
@@ -177,7 +176,7 @@ export default function TwinApp() {
       console.error(err);
       setShowBoot(false);
       setPopulationRunId(null);
-      map.setAgents(fallbackAgents(SIM.n));
+      map.setAgents(fallbackAgents());
       setStatusHtml("offline preview · backend unreachable");
       showToast("Couldn't reach the backend — showing an offline preview.");
       setPhase("error");

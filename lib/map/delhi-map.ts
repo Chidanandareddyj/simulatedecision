@@ -29,6 +29,19 @@ const easeOutBack = (x: number) => { const c1 = 1.70158, c3 = c1 + 1; return 1 +
 const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
+function hash01(id: number, salt: number) {
+  const x = Math.sin(id * 12.9898 + salt * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function inUiExclusion(x: number, y: number, imgW: number, imgH: number) {
+  const ex = MAP.uiExclusion;
+  if (!ex) return false;
+  const nx = x / imgW;
+  const ny = y / imgH;
+  return nx >= ex.x0 && nx <= ex.x1 && ny >= ex.y0 && ny <= ex.y1;
+}
+
 export interface MapSprite {
   wx: number; wy: number; hx: number; hy: number;
   char: number; dir: number; frame: number; frameClock: number;
@@ -76,6 +89,7 @@ export class DelhiMap {
   _raf: number | null;
   cssW: number;
   cssH: number;
+  _pendingAgents: Parameters<DelhiMap["setAgents"]>[0] | null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -112,6 +126,7 @@ export class DelhiMap {
     this.chatterAsked = new Set();                 // resident ids already requested
     this.onNeedChatter = null;                     // (ids:number[]) => void  — app fetches + setThought
     this._raf = null;
+    this._pendingAgents = null;
 
     this._loop = this._loop.bind(this);
     this.resize = this.resize.bind(this);
@@ -189,30 +204,49 @@ export class DelhiMap {
     };
   }
 
-  // raw: [{ lonlat:[lon,lat], ... }]
+  // raw: [{ id, name, ... }] — positions are scattered evenly on land, not ward-based lon/lat.
   setAgents(raw: { lonlat?: number[]; id?: number; name?: string; age?: number; race_eth?: string; educ?: string; neighborhood?: string; values?: Record<string, number>; action?: string }[]) {
-    this.agents = raw
-      .filter((a) => Array.isArray(a.lonlat))
-      .map((a, i) => {
-        const w0 = this.lonlatToWorld(a.lonlat[0], a.lonlat[1]);
-        const w = this._snapToLand(w0.x, w0.y);   // keep every resident on land
-        const ang = Math.random() * Math.PI * 2;
-        return {
-          wx: w.x, wy: w.y,
-          hx: w.x, hy: w.y,                 // verdict-field home (world px)
-          char: i % SHEET.nChars,
-          dir: 0, frame: 1, frameClock: Math.random() * 1000,
-          ang, speed: 5 + Math.random() * 9, // world px/sec
-          turnClock: Math.random() * 2.5,
-          verdict: null, activateAt: 0,
-          seed: a.id ?? i,
-          thought: makeThought(a, a.id ?? i),   // diverse persona thought (backend value vector + demographics)
-          rationale: null,                       // set from a poll's sample_rationales
-          // seeded persona, surfaced when you tap a character
-          name: a.name, age: a.age, race: a.race_eth, educ: a.educ,
-          hood: a.neighborhood, values: a.values, action: a.action,
-        };
-      });
+    this._pendingAgents = raw;
+    this._placeAgentsFromRaw(raw);
+  }
+
+  _placeAgentsFromRaw(raw: Parameters<DelhiMap["setAgents"]>[0]) {
+    const n = raw.length;
+    if (!n) {
+      this.agents = [];
+      return;
+    }
+    const box = this.landBox ?? { minX: 0, minY: 0, maxX: this.imgW, maxY: this.imgH };
+    const cols = Math.ceil(Math.sqrt(n));
+    const rows = Math.ceil(n / cols);
+
+    this.agents = raw.map((a, i) => {
+      const id = a.id ?? i;
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const jx = hash01(id, 11) * 0.8 + 0.1;
+      const jy = hash01(id, 29) * 0.8 + 0.1;
+      const tx = (col + jx) / cols;
+      const ty = (row + jy) / rows;
+      const w0x = box.minX + tx * (box.maxX - box.minX);
+      const w0y = box.minY + ty * (box.maxY - box.minY);
+      const w = this._snapToLand(w0x, w0y);
+      const ang = hash01(id, 7) * Math.PI * 2;
+      return {
+        wx: w.x, wy: w.y,
+        hx: w.x, hy: w.y,
+        char: i % SHEET.nChars,
+        dir: 0, frame: 1, frameClock: hash01(id, 3) * 1000,
+        ang, speed: 5 + hash01(id, 5) * 9,
+        turnClock: hash01(id, 13) * 2.5,
+        verdict: null, activateAt: 0,
+        seed: id,
+        thought: makeThought(a, id),
+        rationale: null,
+        name: a.name, age: a.age, race: a.race_eth, educ: a.educ,
+        hood: a.neighborhood, values: a.values, action: a.action,
+      };
+    });
   }
 
   // Build a land/water mask from the base image so sprites never wander into the
@@ -232,8 +266,11 @@ export class DelhiMap {
       for (let i = 0, p = 0; i < mask.length; i++, p += 4) {
         const r = data[p], g = data[p + 1], b = data[p + 2];
         const water = b > 100 && b - r > 28 && b - g > 12;   // blue-dominant
-        mask[i] = water ? 0 : 1;                              // 1 = land
-        if (!water) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
+        const legendInk = r > 190 && g > 190 && b > 190;     // white legend text / boxes
+        const ui = inUiExclusion(x, y, this.imgW, this.imgH);
+        const blocked = water || legendInk || ui;
+        mask[i] = blocked ? 0 : 1;
+        if (!blocked) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
         if (++x === this.imgW) { x = 0; y++; }
       }
       this.landMask = mask;
@@ -244,14 +281,11 @@ export class DelhiMap {
       this.landMask = null; this.landBox = null;
     }
     if (!this.zoomedIn) this._fitOverview(true);   // re-fit now that we know the land box
-    // snap any already-placed agents onto land
-    for (const a of this.agents) {
-      const s = this._snapToLand(a.wx, a.wy);
-      a.wx = s.x; a.wy = s.y; a.hx = s.x; a.hy = s.y;
-    }
+    if (this._pendingAgents?.length) this._placeAgentsFromRaw(this._pendingAgents);
   }
 
   _isLand(wx, wy) {
+    if (inUiExclusion(wx, wy, this.imgW, this.imgH)) return false;
     if (!this.landMask) return true;
     const x = wx | 0, y = wy | 0;
     if (x < 0 || y < 0 || x >= this.imgW || y >= this.imgH) return false;
