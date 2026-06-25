@@ -99,6 +99,8 @@ describe("synthetic population", () => {
     const b = buildPopulation({ n: 100, seed: 99, bundle });
     expect(a.residents.map((r) => r.district)).toEqual(b.residents.map((r) => r.district));
     expect(a.residents.map((r) => r.sex)).toEqual(b.residents.map((r) => r.sex));
+    expect(a.residents[0].lon).toBe(b.residents[0].lon);
+    expect(a.residents[0].name).toBe(b.residents[0].name);
   });
 });
 

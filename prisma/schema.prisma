@@ -76,6 +76,9 @@ model SyntheticResident {
   populationRunId String @map("population_run_id")
   idx             Int
   weight          Float
+  name            String @default("Resident")
+  lon             Float  @default(77.1)
+  lat             Float  @default(28.6)
   district        String
   ward            String
   ageBand         String @map("age_band")

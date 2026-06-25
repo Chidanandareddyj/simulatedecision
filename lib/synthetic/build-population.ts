@@ -2,6 +2,8 @@ import type { CensusBundle } from "@/lib/data/ingest";
 import { ipf, tableToDistribution } from "@/lib/synthetic/ipf";
 import { SeededRng, agentSeed } from "@/lib/synthetic/rng";
 import { buildPersona } from "@/lib/persona/build";
+import { assignName } from "@/lib/persona/names";
+import { lonlatForWard } from "@/lib/geo/delhi";
 import type { SyntheticResidentRecord } from "@/lib/types";
 
 const SEXES = ["male", "female"] as const;
@@ -186,9 +188,15 @@ export function buildPopulation(opts: BuildPopulationOptions): BuildPopulationRe
       profile: { politics: { economicBase: 0.1, socialBase: 0.15, trustBase: -0.05, changeBase: 0.2 } },
     });
 
+    const { lon, lat } = lonlatForWard(ward, aseed);
+    const name = assignName(aseed);
+
     residents.push({
       idx,
       weight: baseWeight,
+      name,
+      lon,
+      lat,
       district,
       ward,
       ageBand: cell.ageBand,

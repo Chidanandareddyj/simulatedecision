@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
         model: result.model,
         population: poll.population ?? null,
         options: poll.options,
-        result: result,
+        result: result as object,
         cacheHit: result.cacheHit,
       },
     });

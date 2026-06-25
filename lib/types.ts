@@ -47,6 +47,9 @@ export interface SyntheticResidentRecord {
   id?: string;
   idx: number;
   weight: number;
+  name: string;
+  lon: number;
+  lat: number;
   district: string;
   ward: string;
   ageBand: string;

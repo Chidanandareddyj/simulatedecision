@@ -72,7 +72,7 @@ export function buildPersona(input: PersonaInput): { persona: string; values: Va
 
   const persona = `A ${mood} ${sexLabel} in ${input.district} (${input.ward}), age ${input.ageBand}, ${REL_LABELS[input.religion] ?? input.religion}, ${scLabel}, ${EDUC_LABELS[input.education] ?? input.education}, speaks ${input.language}, ${workLabel}, ${migrantLabel}. Cares about ${topIssues(values).join(" and ")}.`;
 
-  return { persona, values: Object.fromEntries(Object.entries(values).map(([k, v]) => [k, clamp(v)])) as ValueVector };
+  return { persona, values: Object.fromEntries(Object.entries(values).map(([k, v]) => [k, clamp(v)])) as unknown as ValueVector };
 }
 
 function jitter(rng: SeededRng, scale: number): number {

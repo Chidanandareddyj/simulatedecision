@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       const residents = await loadResidents(populationRunId);
       const fit = computeMarginalFit(residents);
       await prisma.validationRun.create({
-        data: { kind: "marginals", result: fit, passed: fit.passed },
+        data: { kind: "marginals", result: fit as object, passed: fit.passed },
       });
       return NextResponse.json(fit);
     }
@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
             framing: "vote",
             asOfDate: entry.as_of_date,
             model: entry.model,
+            options: [],
           },
           llm,
         });
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
 
       const passed = rows.length ? rows.filter((r) => r.passed).length / rows.length >= rubric.thresholds.weighted_score_min : true;
       const out = { kind: "rubric", entries: rows, passed, threshold: rubric.thresholds.weighted_score_min };
-      await prisma.validationRun.create({ data: { kind: "rubric", result: out, passed } });
+      await prisma.validationRun.create({ data: { kind: "rubric", result: out as object, passed } });
       return NextResponse.json(out);
     }
 

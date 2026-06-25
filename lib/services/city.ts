@@ -15,7 +15,7 @@ export async function ensureDelhiCity() {
       display: DELHI_PROFILE.display,
       promptName: DELHI_PROFILE.promptName,
       demonym: DELHI_PROFILE.demonym,
-      config: DELHI_PROFILE,
+      config: DELHI_PROFILE as object,
     },
   });
 
@@ -72,6 +72,9 @@ export async function createPopulationRun(n: number, seed: number) {
       populationRunId: run.id,
       idx: r.idx,
       weight: r.weight,
+      name: r.name,
+      lon: r.lon,
+      lat: r.lat,
       district: r.district,
       ward: r.ward,
       ageBand: r.ageBand,
@@ -84,7 +87,7 @@ export async function createPopulationRun(n: number, seed: number) {
       language: r.language,
       migrantStatus: r.migrantStatus,
       persona: r.persona,
-      values: r.values,
+      values: r.values as object,
     })),
   });
 
@@ -100,6 +103,9 @@ export async function loadResidents(runId: string): Promise<SyntheticResidentRec
     id: r.id,
     idx: r.idx,
     weight: r.weight,
+    name: r.name,
+    lon: r.lon,
+    lat: r.lat,
     district: r.district,
     ward: r.ward,
     ageBand: r.ageBand,
@@ -112,7 +118,7 @@ export async function loadResidents(runId: string): Promise<SyntheticResidentRec
     language: r.language,
     migrantStatus: r.migrantStatus,
     persona: r.persona,
-    values: r.values as SyntheticResidentRecord["values"],
+    values: r.values as unknown as SyntheticResidentRecord["values"],
   }));
 }
 

@@ -1,0 +1,31 @@
+{
+  "city": "delhi",
+  "date": "2026-06-13",
+  "articles": [
+    {
+      "headline": "Delhi AQI remains in 'very poor' category",
+      "summary": "Residents brace for another week of hazardous air as stubble burning and winter inversion persist across the NCR.",
+      "date": "2026-06-12"
+    },
+    {
+      "headline": "AAP promises expanded mohalla clinics ahead of polls",
+      "summary": "The ruling party doubles down on primary healthcare as a signature achievement in the capital.",
+      "date": "2026-06-11"
+    },
+    {
+      "headline": "Delhi Metro Phase IV corridor work advances",
+      "summary": "New lines aim to connect outer districts with faster commutes for lakhs of daily riders.",
+      "date": "2026-06-10"
+    },
+    {
+      "headline": "Yamuna water levels draw scrutiny after summer shortage",
+      "summary": "Neighbourhoods in East and North East Delhi report intermittent supply cuts.",
+      "date": "2026-06-09"
+    },
+    {
+      "headline": "BJP rallies in Delhi ahead of municipal coordination talks",
+      "summary": "Centre-state tensions remain a talking point as parties position for the next election cycle.",
+      "date": "2026-06-08"
+    }
+  ]
+}

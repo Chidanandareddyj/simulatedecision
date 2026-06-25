@@ -1,0 +1,52 @@
+{
+  "bbox": {
+    "west": 76.84,
+    "east": 77.35,
+    "south": 28.4,
+    "north": 28.88
+  },
+  "imageSize": { "width": 1600, "height": 1400 },
+  "districts": [
+    { "name": "North West", "lon": 77.02, "lat": 28.75 },
+    { "name": "North", "lon": 77.15, "lat": 28.72 },
+    { "name": "North East", "lon": 77.28, "lat": 28.7 },
+    { "name": "East", "lon": 77.3, "lat": 28.65 },
+    { "name": "New Delhi", "lon": 77.21, "lat": 28.61 },
+    { "name": "Central", "lon": 77.23, "lat": 28.63 },
+    { "name": "West", "lon": 77.08, "lat": 28.66 },
+    { "name": "South West", "lon": 77.05, "lat": 28.58 },
+    { "name": "South", "lon": 77.2, "lat": 28.52 }
+  ],
+  "wards": [
+    { "ward": "NW-W01", "district": "North West", "lon": 76.98, "lat": 28.77 },
+    { "ward": "NW-W02", "district": "North West", "lon": 77.01, "lat": 28.76 },
+    { "ward": "NW-W03", "district": "North West", "lon": 77.04, "lat": 28.75 },
+    { "ward": "NW-W04", "district": "North West", "lon": 77.0, "lat": 28.73 },
+    { "ward": "NW-W05", "district": "North West", "lon": 77.05, "lat": 28.74 },
+    { "ward": "N-W01", "district": "North", "lon": 77.12, "lat": 28.74 },
+    { "ward": "N-W02", "district": "North", "lon": 77.16, "lat": 28.72 },
+    { "ward": "N-W03", "district": "North", "lon": 77.18, "lat": 28.7 },
+    { "ward": "NE-W01", "district": "North East", "lon": 77.25, "lat": 28.72 },
+    { "ward": "NE-W02", "district": "North East", "lon": 77.28, "lat": 28.7 },
+    { "ward": "NE-W03", "district": "North East", "lon": 77.31, "lat": 28.68 },
+    { "ward": "E-W01", "district": "East", "lon": 77.28, "lat": 28.66 },
+    { "ward": "E-W02", "district": "East", "lon": 77.31, "lat": 28.64 },
+    { "ward": "E-W03", "district": "East", "lon": 77.32, "lat": 28.62 },
+    { "ward": "ND-W01", "district": "New Delhi", "lon": 77.2, "lat": 28.62 },
+    { "ward": "ND-W02", "district": "New Delhi", "lon": 77.22, "lat": 28.6 },
+    { "ward": "C-W01", "district": "Central", "lon": 77.21, "lat": 28.64 },
+    { "ward": "C-W02", "district": "Central", "lon": 77.24, "lat": 28.63 },
+    { "ward": "C-W03", "district": "Central", "lon": 77.25, "lat": 28.61 },
+    { "ward": "W-W01", "district": "West", "lon": 77.04, "lat": 28.68 },
+    { "ward": "W-W02", "district": "West", "lon": 77.07, "lat": 28.66 },
+    { "ward": "W-W03", "district": "West", "lon": 77.1, "lat": 28.64 },
+    { "ward": "W-W04", "district": "West", "lon": 77.11, "lat": 28.62 },
+    { "ward": "SW-W01", "district": "South West", "lon": 77.02, "lat": 28.6 },
+    { "ward": "SW-W02", "district": "South West", "lon": 77.06, "lat": 28.58 },
+    { "ward": "SW-W03", "district": "South West", "lon": 77.08, "lat": 28.56 },
+    { "ward": "S-W01", "district": "South", "lon": 77.16, "lat": 28.54 },
+    { "ward": "S-W02", "district": "South", "lon": 77.2, "lat": 28.52 },
+    { "ward": "S-W03", "district": "South", "lon": 77.23, "lat": 28.5 },
+    { "ward": "S-W04", "district": "South", "lon": 77.18, "lat": 28.48 }
+  ]
+}
