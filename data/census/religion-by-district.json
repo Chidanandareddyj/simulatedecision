@@ -1,0 +1,32 @@
+{
+  "source": "Census C-01 2011 (district level, curated)",
+  "districts": {
+    "North West": {
+      "hindu": 0.82, "muslim": 0.11, "sikh": 0.04, "christian": 0.01, "jain": 0.01, "buddhist": 0.005, "other": 0.005
+    },
+    "North": {
+      "hindu": 0.78, "muslim": 0.16, "sikh": 0.03, "christian": 0.01, "jain": 0.01, "buddhist": 0.005, "other": 0.005
+    },
+    "North East": {
+      "hindu": 0.72, "muslim": 0.22, "sikh": 0.03, "christian": 0.01, "jain": 0.01, "buddhist": 0.005, "other": 0.005
+    },
+    "East": {
+      "hindu": 0.80, "muslim": 0.14, "sikh": 0.03, "christian": 0.01, "jain": 0.01, "buddhist": 0.005, "other": 0.005
+    },
+    "New Delhi": {
+      "hindu": 0.85, "muslim": 0.08, "sikh": 0.04, "christian": 0.02, "jain": 0.005, "buddhist": 0.003, "other": 0.002
+    },
+    "Central": {
+      "hindu": 0.75, "muslim": 0.18, "sikh": 0.04, "christian": 0.01, "jain": 0.01, "buddhist": 0.005, "other": 0.005
+    },
+    "West": {
+      "hindu": 0.83, "muslim": 0.10, "sikh": 0.04, "christian": 0.01, "jain": 0.01, "buddhist": 0.005, "other": 0.005
+    },
+    "South West": {
+      "hindu": 0.84, "muslim": 0.09, "sikh": 0.04, "christian": 0.01, "jain": 0.01, "buddhist": 0.005, "other": 0.005
+    },
+    "South": {
+      "hindu": 0.86, "muslim": 0.08, "sikh": 0.03, "christian": 0.01, "jain": 0.01, "buddhist": 0.005, "other": 0.005
+    }
+  }
+}

@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model City {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  display   String
+  promptName String  @map("prompt_name")
+  demonym   String
+  config    Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  dataSources    DataSource[]
+  marginals      CensusMarginal[]
+  populationRuns PopulationRun[]
+  rubrics        Rubric[]
+
+  @@map("cities")
+}
+
+model DataSource {
+  id        String   @id @default(cuid())
+  cityId    String   @map("city_id")
+  name      String
+  year      Int
+  sourceUrl String?  @map("source_url")
+  filePath  String?  @map("file_path")
+  ingestedAt DateTime @default(now()) @map("ingested_at")
+
+  city City @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@map("data_sources")
+}
+
+model CensusMarginal {
+  id         String @id @default(cuid())
+  cityId     String @map("city_id")
+  dimension  String
+  geography  String
+  geoLevel   String @map("geo_level")
+  category   String
+  value      Float
+  censusYear Int    @default(2011) @map("census_year")
+
+  city City @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@index([cityId, dimension, geography])
+  @@map("census_marginals")
+}
+
+model PopulationRun {
+  id        String   @id @default(cuid())
+  cityId    String   @map("city_id")
+  seed      Int
+  n         Int
+  nctPop    Float    @map("nct_pop")
+  tvScores  Json?    @map("tv_scores")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  city      City               @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  residents SyntheticResident[]
+  pollRuns  PollRun[]
+
+  @@map("population_runs")
+}
+
+model SyntheticResident {
+  id              String @id @default(cuid())
+  populationRunId String @map("population_run_id")
+  idx             Int
+  weight          Float
+  district        String
+  ward            String
+  ageBand         String @map("age_band")
+  sex             String
+  education       String
+  religion        String
+  scst            String
+  workerStatus    String @map("worker_status")
+  occupationGroup String @map("occupation_group")
+  language        String
+  migrantStatus   String @map("migrant_status")
+  persona         String @db.Text
+  values          Json
+
+  populationRun PopulationRun @relation(fields: [populationRunId], references: [id], onDelete: Cascade)
+
+  @@index([populationRunId])
+  @@map("synthetic_residents")
+}
+
+model PollRun {
+  id              String   @id @default(cuid())
+  populationRunId String   @map("population_run_id")
+  question        String
+  description     String   @db.Text
+  framing         String
+  asOfDate        String   @map("as_of_date")
+  model           String
+  population      String?
+  options         Json?
+  result          Json
+  cacheHit        Boolean  @default(false) @map("cache_hit")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  populationRun PopulationRun @relation(fields: [populationRunId], references: [id], onDelete: Cascade)
+
+  @@map("poll_runs")
+}
+
+model LlmCache {
+  id        String   @id @default(cuid())
+  cacheKey  String   @unique @map("cache_key")
+  model     String
+  response  String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("llm_cache")
+}
+
+model Rubric {
+  id        String   @id @default(cuid())
+  cityId    String   @map("city_id")
+  name      String
+  content   Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  city            City             @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  validationRuns  ValidationRun[]
+
+  @@map("rubrics")
+}
+
+model ValidationRun {
+  id        String   @id @default(cuid())
+  rubricId  String?  @map("rubric_id")
+  kind      String
+  result    Json
+  passed    Boolean
+  createdAt DateTime @default(now()) @map("created_at")
+
+  rubric Rubric? @relation(fields: [rubricId], references: [id], onDelete: SetNull)
+
+  @@map("validation_runs")
+}

@@ -1,0 +1,61 @@
+meta:
+  validation_n: 2000
+  default_seed: 42
+  notes: "Delhi rubric — Census 2011 synthetic population. Historical outcomes only; leakage warnings per entry."
+
+weights:
+  elections_measures: 1.0
+  counterfactuals: 1.0
+
+thresholds:
+  weighted_score_min: 0.65
+  elections_measures_max_abs_err: 0.10
+  counterfactual_direction_min: 0.75
+  marginal_tv_max: 0.05
+
+elections_measures:
+  - id: delhi_aap_assembly_2020_share
+    as_of_date: "2020-02-07"
+    model: gpt-4o
+    question: "In the February 2020 Delhi Assembly election, do you vote for the Aam Aadmi Party (AAP) candidate in your constituency?"
+    description: "Delhi Assembly election. AAP campaigned on free electricity/water, schools, and mohalla clinics. BJP focused on nationalism and Centre alignment. Congress was a distant third."
+    target_share: 0.5354
+    tolerance: 0.10
+    leakage_warning: "Outcome known after Feb 2020; use gpt-4o or earlier-cutoff model for backtest."
+
+  - id: delhi_bjp_lok_sabha_2024_seats
+    as_of_date: "2024-05-24"
+    model: gpt-4o
+    question: "In the 2024 Lok Sabha election, do you vote for the BJP candidate in your Delhi constituency?"
+    description: "Delhi has 7 Lok Sabha seats. BJP won all 7 in 2019 and 2024. AAP and Congress had an alliance in 2024."
+    target_share: 0.54
+    tolerance: 0.12
+    leakage_warning: "2024 results public; backtest only with pre-result model cutoff."
+
+counterfactuals:
+  - id: cf_pollution_alert
+    as_of_date: "2019-11-01"
+    model: gpt-4o
+    question: "Do you support stronger government action to reduce air pollution in Delhi?"
+    description: "Delhi faces severe winter smog from crop burning, vehicles, and construction dust."
+    direction: up
+    event: "A severe pollution emergency is declared; AQI exceeds 400 for a week and schools close."
+    leakage_warning: "Direction-only test; no published before/after poll target."
+
+  - id: cf_water_cut
+    as_of_date: "2018-06-01"
+    model: gpt-4o
+    question: "Do you approve of the Delhi government's handling of water supply?"
+    description: "Many colonies rely on tankers; summer shortages are common."
+    direction: down
+    event: "A major water treatment plant failure cuts supply to South and West Delhi for 10 days in peak summer."
+    leakage_warning: "Direction-only test."
+
+  - id: cf_metro_fare_hike
+    as_of_date: "2017-10-01"
+    model: gpt-4o
+    question: "Do you support a fare increase on the Delhi Metro to fund expansion?"
+    description: "Delhi Metro is widely used; fare hikes have historically drawn protests."
+    direction: down
+    event: "DMRC proposes a 20% fare hike citing losses."
+    leakage_warning: "Direction-only test."
