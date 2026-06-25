@@ -7,7 +7,7 @@ export const SIM = {
 
 export const PREDICT = {
   as_of_date: "2026-06-13",
-  model: "anthropic/claude-sonnet-4",
+  model: "openai/gpt-4o",
 };
 
 export const TIMING = {

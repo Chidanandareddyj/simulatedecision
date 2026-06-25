@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { createLlmClient } from "@/lib/llm/client";
+import { createLlmClient, isLlmConfigured } from "@/lib/llm/client";
 
 const FALLBACK_THOUGHTS = [
   "Metro's packed again today",
@@ -41,15 +41,14 @@ export async function POST(req: NextRequest) {
       chatter[String(r.idx)] = fallbackThought(r.persona, r.id);
     }
 
-    const key = process.env.OPENROUTER_API_KEY;
-    if (key && rows.length > 0) {
+    if (isLlmConfigured() && rows.length > 0) {
       try {
         const llm = createLlmClient();
         const brief = rows
           .map((r) => `#${r.idx}: ${r.persona.slice(0, 120)}`)
           .join("\n");
         const res = await llm.complete({
-          model: "openai/gpt-4o-mini",
+          model: process.env.CHATTER_MODEL ?? process.env.DEFAULT_MODEL ?? "openai/gpt-4o",
           system:
             "You write one short inner thought (max 12 words) per Delhi resident. Return JSON object mapping id strings to thoughts. Casual, first-person.",
           user: `Residents:\n${brief}\n\nReturn JSON like {"0":"thought",...} for ids: ${rows.map((r) => r.idx).join(", ")}`,

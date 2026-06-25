@@ -6,7 +6,7 @@ Census 2011–grounded synthetic population for NCT Delhi, with archetype-cluste
 
 - Next.js App Router + Route Handlers
 - Prisma + PostgreSQL (external)
-- LangChain / LangGraph + OpenRouter (OpenAI-compatible API)
+- LangChain / LangGraph + GitHub Models (OpenAI-compatible API)
 - Vitest
 
 ## Setup
@@ -14,7 +14,7 @@ Census 2011–grounded synthetic population for NCT Delhi, with archetype-cluste
 ```bash
 cd delhi-twin
 cp .env.example .env
-# Set DATABASE_URL and OPENROUTER_API_KEY
+# Set DATABASE_URL and GITHUB_TOKEN (PAT with models:read)
 npm install
 npx prisma db push
 npm run dev
