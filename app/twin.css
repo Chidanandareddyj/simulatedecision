@@ -1,7 +1,7 @@
 /* ─────────────────────────────────────────────────────────────────────────
    sim francisco · pixel-map frontend
    Neutral (no purple) glassmorphic + neumorphic chrome floating over the
-   pixel-art city. Body type: Neue Haas Grotesk Display Pro 55 Roman (Typekit).
+   pixel-art city. System UI type: San Francisco on Apple, Segoe UI on Windows.
    ───────────────────────────────────────────────────────────────────────── */
 :root {
   --ink:      #141414;   /* near-black: title + primary text */
@@ -28,8 +28,8 @@
   --ease:   cubic-bezier(.2, .8, .2, 1);
   --ease-pop: cubic-bezier(.2, .85, .25, 1.05);
 
-  --font:       var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  --font-title: var(--font-pixelify), "Pixelify Sans", ui-monospace, monospace;
+  --font:       var(--font-sf);
+  --font-title: var(--font-sf);
 }
 
 * { box-sizing: border-box; }
@@ -74,7 +74,7 @@ body {
   max-width: min(440px, calc(100vw - 40px));
 }
 .title {
-  font-family: var(--font-title);
+  font-family: var(--font);
   font-size: 25px; font-weight: 600; line-height: 1;
   letter-spacing: .02em; color: var(--ink);
   padding: 11px 16px 9px; border-radius: 14px;

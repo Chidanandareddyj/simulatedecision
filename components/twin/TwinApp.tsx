@@ -589,7 +589,7 @@ export default function TwinApp() {
                 <circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" strokeWidth="2" />
                 <path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M15 15l4.5 4.5" />
               </svg>
-              <span className="ask-label">{askState === "busy" ? "predicting…" : "ask"}</span>
+              <span className="ask-label">{askState === "busy" ? "predicting…" : "Ask"}</span>
               <textarea
                 ref={askInputRef}
                 className="ask-input"

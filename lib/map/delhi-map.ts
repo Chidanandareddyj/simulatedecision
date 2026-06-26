@@ -23,7 +23,7 @@ const OVERVIEW_SPRITE_PX = 10;
 const CHAR_COLORS = ["#c64f3f", "#3f72c6", "#46a35a", "#8a5fbf", "#caa23c", "#cf6aa0", "#3fb5b0", "#b5713f", "#5a6470", "#d0823f"];
 
 // Pokémon-style thought bubbles (shown when zoomed in)
-const BUBBLE = { maxAtOnce: 7, sep: 165, cycleMs: 2600, font: '600 11px system-ui, -apple-system, sans-serif', maxW: 156 };
+const BUBBLE = { maxAtOnce: 7, sep: 165, cycleMs: 2600, font: '600 11px -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif', maxW: 156 };
 const easeOutBack = (x: number) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
 
 const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
