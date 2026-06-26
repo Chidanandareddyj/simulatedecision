@@ -24,27 +24,82 @@ export interface BuildPopulationResult {
   tvScores: Record<string, number>;
 }
 
-function buildDistrictIpfTable(districtPop: number, bundle: CensusBundle): number[][] {
-  const m = bundle.nctMarginals;
-  const sexShare = { male: m.sex.male / bundle.nctPopulation, female: m.sex.female / bundle.nctPopulation };
-  const ageShares = AGE_BANDS.map((a) => m.ageBand[a] / bundle.nctPopulation);
-  const litShares = LITERACY.map((l) => m.literacy[l] / bundle.nctPopulation);
-  const scShares = [m.scst.sc / bundle.nctPopulation, m.scst.non_sc / bundle.nctPopulation];
-  const workerShares = WORKER.map((w) => m.workerStatus[w] / bundle.nctPopulation);
+const COL_COUNT = LITERACY.length * SCST.length * WORKER.length;
 
-  const rowLabels = SEXES.flatMap((s) => AGE_BANDS.map((a) => `${s}|${a}`));
-  const colLabels = LITERACY.flatMap((l) => SCST.flatMap((sc) => WORKER.map((w) => `${l}|${sc}|${w}`)));
+/**
+ * Demographic association PRIORS — deliberately NOT treated as Census ground truth.
+ * They give IPF a correlated seed so raking transfers realistic cross-attribute
+ * structure (age / sex / caste -> literacy and work) onto the true 1-way Census
+ * marginals, instead of drawing every attribute independently.
+ *
+ * Limitation: literacy / SC / worker stay mutually independent *unconditionally*
+ * (their joint is pinned to the column marginals); the seed only induces their
+ * correlation with sex and age.
+ */
+function literateSharePrior(sex: string, age: string, scst: string): number {
+  const byAge: Record<string, number> = {
+    "0-14": 0.78,
+    "15-24": 0.93,
+    "25-44": 0.86,
+    "45-59": 0.72,
+    "60+": 0.55,
+  };
+  let p = byAge[age] ?? 0.8;
+  if (sex === "female") p -= 0.1;
+  if (scst === "sc") p -= 0.08;
+  return Math.min(0.98, Math.max(0.05, p));
+}
 
-  const rowTargets = SEXES.flatMap((s) => AGE_BANDS.map((a) => districtPop * sexShare[s] * (m.ageBand[a] / bundle.nctPopulation)));
-  const colTargets = LITERACY.flatMap((l) =>
-    SCST.flatMap((sc) => WORKER.map((w) => districtPop * (m.literacy[l] / bundle.nctPopulation) * (m.scst[sc] / bundle.nctPopulation) * (m.workerStatus[w] / bundle.nctPopulation))),
+function workerSharePrior(sex: string, age: string): number {
+  const byAge: Record<string, number> = {
+    "0-14": 0.02,
+    "15-24": 0.42,
+    "25-44": 0.74,
+    "45-59": 0.62,
+    "60+": 0.18,
+  };
+  let p = byAge[age] ?? 0.4;
+  if (sex === "female") p *= 0.45; // large gender gap in Indian labour-force participation
+  return Math.min(0.95, Math.max(0.01, p));
+}
+
+function buildSeedTable(): number[][] {
+  const rowMeta = SEXES.flatMap((s) => AGE_BANDS.map((a) => ({ s, a })));
+  const colMeta = LITERACY.flatMap((l) => SCST.flatMap((sc) => WORKER.map((w) => ({ l, sc, w }))));
+  return rowMeta.map(({ s, a }) =>
+    colMeta.map(({ l, sc, w }) => {
+      const lit = literateSharePrior(s, a, sc);
+      const litC = l === "literate" ? lit : 1 - lit;
+      const wp = workerSharePrior(s, a);
+      const wC = w === "worker" ? wp : 1 - wp;
+      return Math.max(1e-6, litC * wC);
+    }),
   );
+}
 
-  const rows = rowLabels.length;
-  const cols = colLabels.length;
-  const seed = Array.from({ length: rows }, () => Array.from({ length: cols }, () => 1));
-  const table = ipf(seed, rowTargets, colTargets);
-  return table;
+/**
+ * Build the NCT demographic cell distribution once via IPF: a correlated seed
+ * reconciled against the true sex×age (rows) and literacy×SC×worker (cols)
+ * marginals. District does not alter this distribution (religion / ward /
+ * education vary by district downstream), so it is computed a single time.
+ */
+function buildNctCellDistribution(bundle: CensusBundle): number[] {
+  const m = bundle.nctMarginals;
+  const scTotal = m.scst.sc + m.scst.non_sc;
+  const rowTargets = SEXES.flatMap((s) =>
+    AGE_BANDS.map((a) => (m.sex[s] / bundle.nctPopulation) * (m.ageBand[a] / bundle.nctPopulation)),
+  );
+  const colTargets = LITERACY.flatMap((l) =>
+    SCST.flatMap((sc) =>
+      WORKER.map(
+        (w) =>
+          (m.literacy[l] / bundle.nctPopulation) *
+          (m.scst[sc] / scTotal) *
+          (m.workerStatus[w] / bundle.nctPopulation),
+      ),
+    ),
+  );
+  return tableToDistribution(ipf(buildSeedTable(), rowTargets, colTargets));
 }
 
 function decodeCell(rowIdx: number, colIdx: number): {
@@ -151,16 +206,16 @@ export function buildPopulation(opts: BuildPopulationOptions): BuildPopulationRe
   const districtWeights = bundle.districts.map((d) => d.population);
   const districtNames = bundle.districts.map((d) => d.name);
 
+  // IPF cell table is district-independent — build it once, then sample per resident.
+  const cellDist = buildNctCellDistribution(bundle);
+  const cellIndices = cellDist.map((_, j) => j);
+
   let idx = 0;
   for (let i = 0; i < n; i++) {
     const district = rng.pickWeighted(districtNames, districtWeights);
-    const distPop = bundle.districts.find((d) => d.name === district)!.population;
-    const table = buildDistrictIpfTable(distPop, bundle);
-    const flat = tableToDistribution(table);
-    const cellIdx = rng.pickWeighted(flat.map((_, j) => j), flat);
-    const colLabels = LITERACY.length * SCST.length * WORKER.length;
-    const rowIdx = Math.floor(cellIdx / colLabels);
-    const colIdx = cellIdx % colLabels;
+    const cellIdx = rng.pickWeighted(cellIndices, cellDist);
+    const rowIdx = Math.floor(cellIdx / COL_COUNT);
+    const colIdx = cellIdx % COL_COUNT;
     const cell = decodeCell(rowIdx, colIdx);
 
     const aseed = agentSeed(seed, idx);

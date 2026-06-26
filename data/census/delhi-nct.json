@@ -1,7 +1,7 @@
 {
   "year": 2011,
   "nctPopulation": 16787941,
-  "source": "Census India 2011 — NCT Delhi row from india_state_master_dataset.csv; districts/SC/education/language/migrant from prior PCA tables where CSV is state-level only",
+  "source": "Census India 2011 — NCT Delhi. sex/age/literacy/SC/religion from india_state_master_dataset.csv. workerStatus/occupation corrected to the published ~33.3% Delhi WPR (the master CSV mislabels working-age population as workers). education/language/migrantStatus are curated estimates from Census 2011 C/D-series shares (not the master CSV).",
   "districts": [
     {
       "code": "090",
@@ -71,15 +71,15 @@
       "st": 42341
     },
     "workerStatus": {
-      "worker": 10703598,
-      "non_worker": 6084343
+      "worker": 5590384,
+      "non_worker": 11197557
     },
     "occupationGroup": {
       "cultivator": 71770,
       "ag_labor": 62948,
-      "household_industry": 345678,
-      "other_worker": 10223202,
-      "non_worker": 6084343
+      "household_industry": 195663,
+      "other_worker": 5260003,
+      "non_worker": 11197557
     },
     "religion": {
       "hindu": 13712100,
@@ -91,23 +91,23 @@
       "other": 15803
     },
     "education": {
-      "below_primary": 1234567,
-      "primary": 2345678,
-      "middle": 3456789,
-      "secondary": 4567890,
-      "higher_secondary": 2345678,
-      "graduate_plus": 2847339
+      "below_primary": 5036382,
+      "primary": 2182432,
+      "middle": 2518191,
+      "secondary": 2853950,
+      "higher_secondary": 2014553,
+      "graduate_plus": 2182433
     },
     "language": {
-      "hindi": 10456789,
-      "punjabi": 567890,
-      "urdu": 1234567,
-      "bengali": 234567,
-      "other": 4294128
+      "hindi": 13581444,
+      "punjabi": 554002,
+      "urdu": 1057640,
+      "bengali": 251819,
+      "other": 1343036
     },
     "migrantStatus": {
-      "native": 4567890,
-      "migrant": 12220051
+      "native": 9569126,
+      "migrant": 7218815
     }
   }
 }

@@ -32,6 +32,13 @@ export async function runPoll(opts: RunPollOptions): Promise<PollResult & { cach
   const seed = opts.seed ?? 42;
 
   const clusters = clusterResidents(opts.residents, maxClusters);
+
+  // Precompute resident index -> cluster index once (avoids O(n * clusters) findIndex scans).
+  const clusterOf = new Array<number>(opts.residents.length).fill(0);
+  clusters.forEach((c, ci) => {
+    for (const memberIdx of c.memberIdx) clusterOf[memberIdx] = ci;
+  });
+
   const sys = systemPrompt(opts.poll.framing, profile);
   const isOptions = opts.poll.framing === "options" && opts.poll.options.length >= 2;
   const nOpts = isOptions ? opts.poll.options.length : 2;
@@ -90,22 +97,19 @@ export async function runPoll(opts: RunPollOptions): Promise<PollResult & { cach
 
   if (isOptions) {
     const weighted: WeightedAnswer[] = opts.residents.map((r, i) => {
-      const ci = clusters.findIndex((c) => c.memberIdx.includes(i));
-      const probs = distByCluster[ci >= 0 ? ci : 0];
+      const probs = distByCluster[clusterOf[i]];
       return { weight: r.weight, probs };
     });
     const dist = weightedDistribution(weighted, nOpts);
     pDistribution = opts.poll.options.map((label, i) => ({ label, p: dist[i] ?? 0 }));
     answers = opts.residents.map((r, i) => {
-      const ci = clusters.findIndex((c) => c.memberIdx.includes(i));
-      const probs = distByCluster[ci >= 0 ? ci : 0];
+      const probs = distByCluster[clusterOf[i]];
       const pYes = probs[0] ?? 0.5;
       return [r.weight, pYes] as [number, number];
     });
   } else {
     answers = opts.residents.map((r, i) => {
-      const ci = clusters.findIndex((c) => c.memberIdx.includes(i));
-      const p = pByCluster[ci >= 0 ? ci : 0];
+      const p = pByCluster[clusterOf[i]];
       return [r.weight, p] as [number, number];
     });
   }
