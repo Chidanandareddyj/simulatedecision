@@ -34,7 +34,7 @@
 
 * { box-sizing: border-box; }
 
-html, body { margin: 0; height: 100%; overflow: hidden; }
+html, body { margin: 0; height: 100%; overflow: hidden; -webkit-text-size-adjust: 100%; }
 body {
   font-family: var(--font);
   font-weight: 500;            /* 55 Roman */
@@ -51,11 +51,11 @@ body {
   outline-offset: 2px;
 }
 
-#map { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; cursor: grab; }
+#map { position: fixed; inset: 0; z-index: 0; width: 100vw; height: 100vh; display: block; cursor: grab; touch-action: none; }
 #map:active { cursor: grabbing; }
 
-#ui { position: fixed; inset: 0; pointer-events: none; }
-#ui > * { pointer-events: auto; }
+#ui { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+.ui-interactive { pointer-events: auto; }
 
 .hidden { display: none !important; }
 
@@ -234,10 +234,10 @@ body {
 
 /* ── bottom-center dock: status · result card · ask composer ───────────── */
 .dock {
-  position: absolute; left: 50%; bottom: 24px;
+  position: absolute; left: 50%; bottom: max(24px, env(safe-area-inset-bottom));
   transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: 11px;
-  width: max-content; max-width: 94vw;
+  width: max-content; max-width: min(94vw, calc(100vw - 24px));
 }
 
 /* the ask composer — one cohesive multiline text box (no inner outline) */
@@ -266,6 +266,7 @@ body {
   max-height: 40vh; overflow-y: hidden; overscroll-behavior: contain;
   padding: 0; margin: 0;
   box-sizing: border-box;
+  touch-action: manipulation;
 }
 .ask-input::placeholder { color: var(--ink-soft); opacity: .8; }
 .ask-enter {
@@ -348,7 +349,8 @@ body {
 .res-example:hover { transform: translateY(-1px); background: var(--glass-strong); }
 .res-example:active { transform: translateY(0); }
 
-.res-actions { display: flex; gap: 9px; margin-top: 16px; }
+.res-actions { display: flex; gap: 9px; margin-top: 16px; flex-wrap: wrap; }
+.res-actions .btn { flex: 1 1 auto; min-width: 0; }
 .btn {
   font-family: var(--font); font-size: 13.5px; font-weight: 600;
   padding: 9px 16px; border-radius: 11px; cursor: pointer;
@@ -393,6 +395,7 @@ body {
   background: rgba(20, 20, 20, 0.28);
   backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
   animation: fadeIn var(--t-mid) var(--ease);
+  pointer-events: none;   /* visual dim only — map stays draggable underneath */
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .about {
@@ -405,6 +408,7 @@ body {
   border: 1px solid var(--glass-edge); box-shadow: var(--neu-lg);
   animation: cardUp var(--t-mid) var(--ease-pop);
   color: var(--ink);
+  pointer-events: auto;
 }
 .about-close {
   position: absolute; top: 14px; right: 16px;
@@ -437,14 +441,14 @@ body {
 
 /* ── mobile / narrow screens: keep the chrome compact and non-overlapping ── */
 @media (max-width: 560px) {
-  .title-select { top: 12px; left: 12px; max-width: calc(100vw - 24px); }
+  .title-select { top: max(12px, env(safe-area-inset-top)); left: 12px; max-width: calc(100vw - 24px); }
   .title { font-size: 21px; padding: 9px 13px 8px; border-radius: 11px; }
   .title-option { font-size: 17px; padding: 8px 12px; }
   /* top-right on mobile: a compact resident count + an expandable news chip, so
      the title (left) and status (right) never collide and the news stays
      reachable (one tap) instead of hidden. */
   .status {
-    top: 14px; right: 12px; font-size: 13px; padding: 8px 13px;
+    top: max(14px, env(safe-area-inset-top)); right: 12px; font-size: 13px; padding: 8px 13px;
     width: auto; max-width: calc(100vw - 150px);   /* content-width; leaves room for the title */
   }
   .status .status-clock { display: none; }         /* the knowledge date moves into the news panel */
@@ -455,6 +459,7 @@ body {
   .news-bubble {
     display: flex; top: 58px; right: 12px; left: auto;
     font-size: 12px; padding: 10px 14px; gap: 6px;
+    max-width: calc(100vw - 24px);
   }
   /* make the collapsed chip clearly a control, not a static label */
   .news-bubble .news-head { font-size: 11px; opacity: .9; }
@@ -467,20 +472,30 @@ body {
     padding-bottom: 7px; margin-bottom: 4px; border-bottom: 1px solid var(--glass-edge);
   }
 
-  .dock { bottom: 16px; gap: 9px; max-width: 96vw; }
-  .summary, .result-card { width: min(94vw, 440px); }
+  .dock {
+    bottom: max(16px, env(safe-area-inset-bottom));
+    gap: 9px;
+    width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
+  }
+  .dock-row { width: 100%; justify-content: center; gap: 8px; }
+  .summary, .result-card { width: 100%; max-width: 100%; }
   .summary-text { font-size: 13.5px; }
-  .ask[data-state="input"] { width: min(560px, calc(96vw - 104px)); }
+  .ask { min-height: 48px; padding: 12px 14px; }
+  .ask[data-state="input"] { width: 100%; max-width: calc(100% - 54px); flex: 1 1 auto; }
+  .ask[data-state="idle"] { width: auto; min-width: 108px; }
   .ask[data-state="busy"] { width: 172px; }
-  .info-btn { width: 46px; height: 46px; font-size: 18px; }
-  .dock-spacer { width: 46px; }
+  .info-btn { width: 46px; height: 46px; font-size: 18px; flex: none; }
+  .dock-spacer { width: 46px; flex: none; }
 
-  .about { width: 94vw; padding: 22px 18px 24px; max-height: 84vh; }
+  .about { width: calc(100vw - 16px); padding: 22px 18px 24px; max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px); }
   .about-title { font-size: 25px; }
   .res-pct { font-size: 44px; }
+  .res-actions { flex-direction: column; }
+  .res-actions .btn { width: 100%; text-align: center; padding: 11px 16px; }
 
   /* thought bubbles are noisy on a small screen — let the sprites breathe */
-  .toast { bottom: 86px; }
+  .toast { bottom: max(86px, calc(70px + env(safe-area-inset-bottom))); max-width: calc(100vw - 24px); }
 }
 
 /* ── character inspector card (tap a character) ────────────────────────── */
@@ -515,7 +530,7 @@ body {
 .char-label.no { color: var(--no); }
 .char-thought { font-size: 13.5px; line-height: 1.45; font-style: italic; color: var(--ink); }
 @media (max-width: 560px) {
-  .char-card { left: 8px; right: 8px; bottom: 86px; width: auto; }
+  .char-card { left: 8px; right: 8px; bottom: max(86px, calc(70px + env(safe-area-inset-bottom))); width: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {

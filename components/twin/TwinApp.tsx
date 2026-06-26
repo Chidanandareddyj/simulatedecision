@@ -9,6 +9,7 @@ import { MAP, SIM, TIMING, MAP_SPRITE_COUNT } from "@/lib/map/config";
 import { DELHI_BBOX } from "@/lib/geo/delhi";
 import * as api from "@/lib/api/client";
 import type { CityInfo, PollResultSnake } from "@/lib/api/client";
+import ResultCard, { type ResultView } from "@/components/twin/ResultCard";
 
 type Phase = "booting" | "idle" | "waiting" | "reveal" | "results" | "error";
 
@@ -20,7 +21,7 @@ interface NewsArticle {
 
 const DELHI_FALLBACK: CityInfo = {
   slug: "delhi",
-  display: "Delhi Census Twin",
+  display: "Simulate Decision",
   bbox: { ...DELHI_BBOX },
   knowledge_date: "2026-06-13",
   default: true,
@@ -113,11 +114,12 @@ export default function TwinApp() {
   const [progressPct, setProgressPct] = useState(12);
   const [progressLabel, setProgressLabel] = useState("");
   const [progressIndeterminate, setProgressIndeterminate] = useState(false);
-  const [resultHtml, setResultHtml] = useState("");
-  const [showResult, setShowResult] = useState(false);
-  const [aboutOpen, setAboutOpen] = useState(false);
+  const [resultView, setResultView] = useState<ResultView | null>(null);
+  const [aboutOpen, setAboutOpen] = useState(true);
   const [charSprite, setCharSprite] = useState<MapSprite | null>(null);
   const portraitRef = useRef<HTMLCanvasElement>(null);
+  const askInputRef = useRef<HTMLTextAreaElement>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
 
   const isBusy = phase === "waiting" || phase === "reveal";
   const inputOpen = askState === "input";
@@ -128,8 +130,23 @@ export default function TwinApp() {
     toastTimer.current = setTimeout(() => setToast(""), 4200);
   }, []);
 
+  const autoGrow = useCallback(() => {
+    const ta = askInputRef.current;
+    if (!ta) return;
+    ta.style.height = `${LINE_H}px`;
+    const sh = ta.scrollHeight;
+    if (sh > LINE_H + 1) {
+      const cap = Math.round(window.innerHeight * 0.4);
+      const h = Math.min(sh, cap);
+      ta.style.height = `${h}px`;
+      ta.style.overflowY = h >= cap ? "auto" : "hidden";
+    } else {
+      ta.style.overflowY = "hidden";
+    }
+  }, []);
+
   const setIdleStatus = useCallback((n: number, c: CityInfo) => {
-    const display = (c.display || "Delhi").toLowerCase();
+    const display = (c.display || "the city").toLowerCase();
     const kd = c.knowledge_date;
     const clock = kd
       ? `<span class="status-clock">residents know the news up to ${escapeHtml(fmtDate(kd))}</span>`
@@ -243,7 +260,7 @@ export default function TwinApp() {
     return () => window.removeEventListener("resize", onResize);
   }, [phase, residents, city, setIdleStatus]);
 
-  const openInput = () => {
+  const openInput = useCallback((prefill = "") => {
     if (isBusy) return;
     if (phase === "error" || !populationRunId) {
       showToast("Predictions need the backend — it's currently unreachable.");
@@ -252,26 +269,38 @@ export default function TwinApp() {
     mapInstance.current?.clearVerdicts();
     setCharSprite(null);
     setShowSummary(false);
-    setShowResult(false);
+    setResultView(null);
     setAskState("input");
     setPhase("idle");
     setIdleStatus(residents, city);
-    setQuestion("");
-  };
+    setQuestion(prefill);
+    requestAnimationFrame(() => {
+      const ta = askInputRef.current;
+      if (!ta) return;
+      ta.style.height = `${LINE_H}px`;
+      ta.focus();
+      if (prefill) autoGrow();
+    });
+  }, [autoGrow, city, isBusy, phase, populationRunId, residents, setIdleStatus, showToast]);
 
-  const closeInput = () => {
+  const closeInput = useCallback(() => {
     setAskState("idle");
     setQuestion("");
-  };
+    const ta = askInputRef.current;
+    if (ta) {
+      ta.style.height = `${LINE_H}px`;
+      ta.blur();
+    }
+  }, []);
 
-  const dismissResults = () => {
-    setShowResult(false);
+  const dismissResults = useCallback(() => {
+    setResultView(null);
     setShowSummary(false);
     mapInstance.current?.clearVerdicts();
     setAskState("idle");
     setIdleStatus(residents, city);
     setPhase("idle");
-  };
+  }, [city, residents, setIdleStatus]);
 
   const cancelPrediction = () => {
     reqId.current++;
@@ -281,16 +310,11 @@ export default function TwinApp() {
     mapInstance.current!.onRevealComplete = null;
     setProgressIndeterminate(false);
     setShowSummary(false);
-    setShowResult(false);
+    setResultView(null);
     mapInstance.current?.clearVerdicts();
     setAskState("idle");
     setIdleStatus(residents, city);
     setPhase("idle");
-  };
-
-  const wireResultActions = () => {
-    document.getElementById("res-again")?.addEventListener("click", openInput);
-    document.getElementById("res-dismiss")?.addEventListener("click", dismissResults);
   };
 
   const showResults = (result: PollResultSnake) => {
@@ -300,48 +324,32 @@ export default function TwinApp() {
     setShowSummary(false);
     setToast("");
 
+    const n = result.n_agents ?? mapInstance.current?.agents.length ?? 0;
+    const rationales = (result.sample_rationales || []).slice(0, 3);
+    const questionText = result.question || "";
+
     if (result.framing === "options" && result.p_distribution?.length) {
       const dist = result.p_distribution
         .map((d) => (Array.isArray(d) ? { label: String(d[0]), p: Number(d[1]) } : d))
         .sort((a, b) => b.p - a.p);
-      const n = result.n_agents ?? mapInstance.current?.agents.length ?? 0;
-      const rationales = (result.sample_rationales || []).slice(0, 3);
-      const rows = dist
-        .map((d, i) => {
-          const pct = Math.round(d.p * 100);
-          return `<div class="res-opt${i === 0 ? " win" : ""}">
-        <div class="res-opt-head"><span class="res-opt-label">${escapeHtml(d.label)}</span><span class="res-opt-pct">${pct}%</span></div>
-        <div class="res-opt-track"><div class="res-opt-fill" style="width:${pct}%"></div></div></div>`;
-        })
-        .join("");
-      setResultHtml(`
-    <div class="res-q">${escapeHtml(result.question || "")}</div>
-    <div class="res-options">${rows}</div>
-    <div class="res-meta">${n.toLocaleString()} synthetic residents</div>
-    ${rationales.length ? `<div class="res-why"><div class="res-why-label">what people said</div><ul>${rationales.map((r) => `<li>${escapeHtml(r)}</li>`).join("")}</ul></div>` : ""}
-    <div class="res-actions"><button id="res-again" class="btn btn-primary">Ask another</button><button id="res-dismiss" class="btn">Dismiss</button></div>`);
-      setShowResult(true);
-      setTimeout(wireResultActions, 0);
+      setResultView({ kind: "options", question: questionText, dist, n, rationales });
       return;
     }
 
     const pct = Math.round((result.p_yes ?? 0) * 100);
-    const noPct = 100 - pct;
     const belief = result.framing === "belief";
     const ciLow = Math.round((result.ci_low ?? result.p_yes) * 100);
     const ciHigh = Math.round((result.ci_high ?? result.p_yes) * 100);
-    const n = result.n_agents ?? mapInstance.current?.agents.length ?? 0;
-    const rationales = (result.sample_rationales || []).slice(0, 3);
-    setResultHtml(`
-    <div class="res-q">${escapeHtml(result.question || "")}</div>
-    <div class="res-headline"><span class="res-pct">${pct}<span class="res-pct-sym">%</span></span><span class="res-verb">${belief ? "likely" : "vote yes"}</span></div>
-    <div class="res-bar"><div class="res-bar-yes" style="width:${pct}%"></div><div class="res-bar-no" style="width:${noPct}%"></div></div>
-    <div class="res-legend"><span><i class="dot yes"></i>${belief ? "yes" : "support"} ${pct}%</span><span><i class="dot no"></i>${belief ? "no" : "oppose"} ${noPct}%</span></div>
-    <div class="res-meta">${n.toLocaleString()} synthetic residents · 95% CI ${ciLow}–${ciHigh}%</div>
-    ${rationales.length ? `<div class="res-why"><div class="res-why-label">what people said</div><ul>${rationales.map((r) => `<li>${escapeHtml(r)}</li>`).join("")}</ul></div>` : ""}
-    <div class="res-actions"><button id="res-again" class="btn btn-primary">Ask another</button><button id="res-dismiss" class="btn">Dismiss</button></div>`);
-    setShowResult(true);
-    setTimeout(wireResultActions, 0);
+    setResultView({
+      kind: "binary",
+      question: questionText,
+      pct,
+      belief,
+      ciLow,
+      ciHigh,
+      n,
+      rationales,
+    });
   };
 
   const showRephrase = (parsed: { reason?: string; examples?: string[] }, q: string) => {
@@ -352,22 +360,7 @@ export default function TwinApp() {
     mapInstance.current?.clearVerdicts();
     const reason = parsed.reason || "I couldn't turn that into a poll for this city.";
     const examples = (parsed.examples || []).filter(Boolean).slice(0, 4);
-    setResultHtml(`
-    <div class="res-q">${escapeHtml(q)}</div>
-    <div class="res-rephrase-label">try rephrasing</div>
-    <div class="res-rephrase-reason">${escapeHtml(reason)}</div>
-    ${examples.length ? `<div class="res-examples">${examples.map((ex) => `<button type="button" class="res-example">${escapeHtml(ex)}</button>`).join("")}</div>` : ""}
-    <div class="res-actions"><button id="res-again" class="btn btn-primary">Ask another</button><button id="res-dismiss" class="btn">Dismiss</button></div>`);
-    setShowResult(true);
-    setTimeout(() => {
-      wireResultActions();
-      document.querySelectorAll(".res-example").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          openInput();
-          setQuestion((btn as HTMLButtonElement).textContent || "");
-        });
-      });
-    }, 0);
+    setResultView({ kind: "rephrase", question: q, reason, examples });
   };
 
   const runPrediction = async (q: string) => {
@@ -390,8 +383,9 @@ export default function TwinApp() {
     setProgressPct(12);
     setProgressIndeterminate(true);
     setProgressLabel("understanding your question… (esc to cancel)");
-    setShowResult(false);
+    setResultView(null);
     setShowSummary(true);
+    askInputRef.current?.blur();
     map.setWaiting();
 
     try {
@@ -451,6 +445,16 @@ export default function TwinApp() {
   };
 
   useEffect(() => {
+    const onMouseDown = (e: MouseEvent) => {
+      if (askState === "input" && dockRef.current && !dockRef.current.contains(e.target as Node)) {
+        closeInput();
+      }
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [askState, closeInput]);
+
+  useEffect(() => {
     const typingTarget = (el: Element | null) =>
       el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || (el as HTMLElement).isContentEditable);
 
@@ -472,7 +476,7 @@ export default function TwinApp() {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [aboutOpen, charSprite, isBusy, phase, inputOpen]);
+  }, [aboutOpen, charSprite, closeInput, dismissResults, inputOpen, isBusy, openInput, phase]);
 
   const v = charSprite?.values;
   const charDem = charSprite
@@ -492,17 +496,17 @@ export default function TwinApp() {
       <MapCanvas ref={mapRef} onReady={wireMap} />
 
       <div id="ui">
-        <div className="title-select">
+        <div className="title-select ui-interactive">
           <button className="title title-btn" type="button" disabled aria-label="City">
             <span className="title-current">{city.display}</span>
           </button>
         </div>
 
-        <div className="status" dangerouslySetInnerHTML={{ __html: statusHtml }} />
+        <div className="status ui-interactive" dangerouslySetInnerHTML={{ __html: statusHtml }} />
 
         {news.length > 0 && (
           <div
-            className="news-bubble"
+            className="news-bubble ui-interactive"
             data-expanded={newsExpanded ? "true" : "false"}
             onClick={() => setNewsExpanded((x) => !x)}
             role="button"
@@ -540,7 +544,7 @@ export default function TwinApp() {
         )}
 
         {zoomedIn && (
-          <button type="button" className="return" aria-label="Return to the whole city" onClick={() => mapInstance.current?.returnToOverview()}>
+          <button type="button" className="return ui-interactive" aria-label="Return to the whole city" onClick={() => mapInstance.current?.returnToOverview()}>
             <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
               <path fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" d="M15 5l-7 7 7 7" />
             </svg>
@@ -548,7 +552,7 @@ export default function TwinApp() {
           </button>
         )}
 
-        <div className="dock">
+        <div className="dock ui-interactive" ref={dockRef}>
           {showSummary && (
             <div className="summary" aria-live="polite">
               <div className="summary-label">{summaryLabel}</div>
@@ -562,8 +566,13 @@ export default function TwinApp() {
             </div>
           )}
 
-          {showResult && (
-            <div className="result-card" role="dialog" aria-label="Prediction result" dangerouslySetInnerHTML={{ __html: resultHtml }} />
+          {resultView && (
+            <ResultCard
+              result={resultView}
+              onAgain={() => openInput()}
+              onDismiss={dismissResults}
+              onExample={(text) => openInput(text)}
+            />
           )}
 
           <div className="dock-row">
@@ -573,8 +582,11 @@ export default function TwinApp() {
               data-state={askState}
               onClick={() => {
                 if (isBusy) cancelPrediction();
-                else if (inputOpen) return;
-                else openInput();
+                else if (inputOpen) {
+                  askInputRef.current?.focus();
+                  return;
+                }
+                openInput();
               }}
             >
               <svg className="ask-search" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -583,10 +595,16 @@ export default function TwinApp() {
               </svg>
               <span className="ask-label">{askState === "busy" ? "predicting…" : "ask"}</span>
               <textarea
+                ref={askInputRef}
                 className="ask-input"
                 rows={1}
                 value={question}
-                onChange={(e) => setQuestion(e.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+                onChange={(e) => {
+                  setQuestion(e.target.value);
+                  autoGrow();
+                }}
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
@@ -594,43 +612,44 @@ export default function TwinApp() {
                     runPrediction(question);
                   }
                 }}
-                placeholder="predict anything — e.g. will AAP win the next Delhi Assembly election?"
+                placeholder="predict anything — e.g. will voters support a new transit line?"
                 aria-label="Predict anything"
-                style={{ height: askState === "input" ? undefined : LINE_H }}
               />
               <kbd className="ask-enter" aria-hidden="true">↵</kbd>
             </div>
-            <button type="button" className="info-btn" aria-label="About Delhi Census Twin" title="About" onClick={() => setAboutOpen(true)}>?</button>
+            <button type="button" className="info-btn" aria-label="About Census Twin" title="About" onClick={() => setAboutOpen(true)}>?</button>
           </div>
         </div>
 
-        {toast && <div className="toast">{toast}</div>}
+        {toast && <div className="toast ui-interactive">{toast}</div>}
 
         {aboutOpen && (
           <>
-            <div className="about-scrim" onClick={() => setAboutOpen(false)} />
-            <div className="about" role="dialog" aria-modal="true" aria-label="About Delhi Census Twin">
+            <div className="about-scrim" aria-hidden="true" />
+            <div className="about ui-interactive" role="dialog" aria-modal="true" aria-label="About Census Twin">
               <button type="button" className="about-close" aria-label="Close" onClick={() => setAboutOpen(false)}>×</button>
-              <div className="about-title">Delhi Census Twin</div>
-              <div className="about-sub">simulate and predict India&apos;s capital</div>
+              <div className="about-title">Census Twin</div>
+              <div className="about-sub">simulate and predict cities from census data</div>
               <div className="about-h">The pitch</div>
-              <p>What if you could predict how Delhi residents would respond to a policy before it launched? Or get a signal on who will win an election?</p>
-              <p>We built a synthetic population of NCT Delhi from Census 2011 marginals — districts, wards, religion, education, migration — and poll it with archetype-clustered LLM calls.</p>
-              <div className="about-h">Validation</div>
+              <p>What if you could predict how residents would respond to a policy before it launched? Or get a signal on who will win an election?</p>
+              <p>We build a synthetic population for each city from census marginals — demographics, neighborhoods, religion, education, migration — and poll it with archetype-clustered LLM calls. Switch cities from the title in the top-left.</p>
+              <div className="about-h">How it works</div>
+              <p>Ask any yes/no question, belief forecast, or multi-option poll. The twin clusters residents into demographic archetypes, batches model calls, and aggregates answers with survey weights — then reveals the verdict on the map.</p>
+              <div className="about-h">Example validation</div>
               <div className="about-ex">
-                <div className="about-ex-title">2020 Delhi Assembly</div>
-                <div className="about-ex-q">Will AAP win a majority?</div>
-                <div className="about-ex-nums"><span className="actual">Actual: AAP landslide</span><span className="pred">Twin: strong AAP lean</span></div>
+                <div className="about-ex-title">Delhi · 2020 Assembly</div>
+                <div className="about-ex-q">Will the incumbent party win a majority?</div>
+                <div className="about-ex-nums"><span className="actual">Actual: landslide win</span><span className="pred">Twin: strong incumbent lean</span></div>
               </div>
               <div className="about-credit">
-                Built on Census 2011 PCA data. <b>Delhi Census Twin</b> — a Next.js port of the simfrancisco prediction engine.
+                Built on public census microdata. <b>Census Twin</b> — a Next.js port of the <span className="about-name">sim francisco</span> prediction engine.
               </div>
             </div>
           </>
         )}
 
         {charSprite?.name && (
-          <div className="char-card">
+          <div className="char-card ui-interactive">
             <button type="button" className="char-close" aria-label="Close" onClick={() => setCharSprite(null)}>×</button>
             <div className="char-head">
               <canvas ref={portraitRef} className="char-portrait" width={46} height={46} />

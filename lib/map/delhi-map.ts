@@ -356,6 +356,11 @@ export class DelhiMap {
     return { x, y, zoom: c.zoom };
   }
 
+  _canPan() {
+    const z = this.cam.zoom;
+    return this.imgW * z > this.cssW + 1 || this.imgH * z > this.cssH + 1;
+  }
+
   screenToWorld(sx, sy) {
     return { x: this.cam.x + (sx - this.cssW / 2) / this.cam.zoom, y: this.cam.y + (sy - this.cssH / 2) / this.cam.zoom };
   }
@@ -408,7 +413,7 @@ export class DelhiMap {
       const dx = e.clientX - lastX, dy = e.clientY - lastY;
       lastX = e.clientX; lastY = e.clientY;
       moved += Math.abs(dx) + Math.abs(dy);
-      if (this.zoomedIn) panBy(dx, dy);
+      if (this._canPan()) panBy(dx, dy);
     });
     const end = (e) => {
       if (!pts.has(e.pointerId)) return;

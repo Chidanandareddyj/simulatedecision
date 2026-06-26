@@ -20,8 +20,14 @@ const pixelify = Pixelify_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Delhi Census Twin — predict the city",
-  description: "Census 2011 synthetic population polling for NCT Delhi",
+  title: "Census Twin — predict the city",
+  description: "Synthetic population polling from census microdata — ask any question and see how residents would respond.",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
 };
 
 export default function RootLayout({
