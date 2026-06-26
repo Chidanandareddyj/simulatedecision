@@ -3,7 +3,7 @@ import nctData from "@/data/census/delhi-nct.json";
 
 export const DELHI_PROFILE: CityProfile = {
   slug: "delhi",
-  display: "Delhi Census Twin",
+  display: "Simulate Decision",
   promptName: "Delhi (NCT)",
   demonym: "Delhiite",
   nctPopulation: nctData.nctPopulation,

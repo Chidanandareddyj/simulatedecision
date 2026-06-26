@@ -147,14 +147,10 @@ export default function TwinApp() {
 
   const setIdleStatus = useCallback((n: number, c: CityInfo) => {
     const display = (c.display || "the city").toLowerCase();
-    const kd = c.knowledge_date;
-    const clock = kd
-      ? `<span class="status-clock">residents know the news up to ${escapeHtml(fmtDate(kd))}</span>`
-      : "";
     if (typeof window !== "undefined" && window.innerWidth < 560) {
       setStatusHtml(`${n.toLocaleString()} residents`);
     } else {
-      setStatusHtml(`${escapeHtml(display)} · ${n.toLocaleString()} residents${clock}`);
+      setStatusHtml(`${escapeHtml(display)} · ${n.toLocaleString()} residents`);
     }
   }, []);
 
@@ -504,7 +500,7 @@ export default function TwinApp() {
 
         <div className="status ui-interactive" dangerouslySetInnerHTML={{ __html: statusHtml }} />
 
-        {news.length > 0 && (
+        {/* {news.length > 0 && (
           <div
             className="news-bubble ui-interactive"
             data-expanded={newsExpanded ? "true" : "false"}
@@ -533,7 +529,7 @@ export default function TwinApp() {
                   <span key={i} className="news-item">{a.headline}</span>
                 ))}
           </div>
-        )}
+        )} */}
 
         {showBoot && (
           <div className="boot" aria-hidden="true">
@@ -548,7 +544,7 @@ export default function TwinApp() {
             <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
               <path fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" d="M15 5l-7 7 7 7" />
             </svg>
-            <span>whole city</span>
+            <span>overview</span>
           </button>
         )}
 
@@ -628,21 +624,15 @@ export default function TwinApp() {
             <div className="about-scrim" aria-hidden="true" />
             <div className="about ui-interactive" role="dialog" aria-modal="true" aria-label="About Census Twin">
               <button type="button" className="about-close" aria-label="Close" onClick={() => setAboutOpen(false)}>×</button>
-              <div className="about-title">Census Twin</div>
-              <div className="about-sub">simulate and predict cities from census data</div>
+              <div className="about-title">Simulate Decision</div>
+              <div className="about-sub">simulate and predict decisions from census data</div>
               <div className="about-h">The pitch</div>
               <p>What if you could predict how residents would respond to a policy before it launched? Or get a signal on who will win an election?</p>
-              <p>We build a synthetic population for each city from census marginals — demographics, neighborhoods, religion, education, migration — and poll it with archetype-clustered LLM calls. Switch cities from the title in the top-left.</p>
+              <p>This is a synthetic population for cities from census marginals: demographics, neighborhoods, religion, education, migration and polls it with archetype-clustered LLM calls.</p>
               <div className="about-h">How it works</div>
-              <p>Ask any yes/no question, belief forecast, or multi-option poll. The twin clusters residents into demographic archetypes, batches model calls, and aggregates answers with survey weights — then reveals the verdict on the map.</p>
-              <div className="about-h">Example validation</div>
-              <div className="about-ex">
-                <div className="about-ex-title">Delhi · 2020 Assembly</div>
-                <div className="about-ex-q">Will the incumbent party win a majority?</div>
-                <div className="about-ex-nums"><span className="actual">Actual: landslide win</span><span className="pred">Twin: strong incumbent lean</span></div>
-              </div>
+              <p>Ask any yes/no question, belief forecast, or multi-option poll. The synthetic population clusters residents into demographic archetypes, batches model calls, and aggregates answers with survey weights then reveals the verdict on the map.</p>
               <div className="about-credit">
-                Built on public census microdata. <b>Census Twin</b> — a Next.js port of the <span className="about-name">sim francisco</span> prediction engine.
+                Built on Census 2011 PCA data. <b>Simulate Decision</b>
               </div>
             </div>
           </>
